@@ -146,3 +146,33 @@ ORDER BY
   Num1,
   Transfer,
   Num2;
+
+-- Order not specified in problem
+
+SELECT Bus1.num AS 'Bus 1',
+       Bus1.company AS 'Company 1',
+       stops.name AS Transfer,
+       Bus2.num AS 'Bus 2',
+       Bus2.company AS 'Company 2'
+FROM
+  (SELECT a.num, a.stop AS transfer, a.company
+  FROM route AS a
+  INNER JOIN route AS b
+  ON a.num = b.num  AND a.company = b.company
+  INNER JOIN stops ON b.stop = stops.id
+  WHERE stops.name = 'Craiglockhart'
+  ) AS Bus1
+INNER JOIN
+  (SELECT a.num, a.stop AS transfer, b.company
+  FROM route AS a
+  INNER JOIN route AS b
+  ON a.num = b.num  AND a.company = b.company
+  INNER JOIN stops ON b.stop = stops.id
+  WHERE stops.name = 'Lochend'
+  ) AS Bus2
+ON Bus1.transfer = Bus2.transfer
+INNER JOIN stops ON Bus1.transfer = stops.id
+ORDER BY Bus1.num, stops.name, Bus2.num;
+
+-- Almost the same answer, with different decisions in line breaks and naming — maybe clearer?
+-- Joins with stops table at end to get the name of the transfer, rather than joining twice with stops within each inner SELECT

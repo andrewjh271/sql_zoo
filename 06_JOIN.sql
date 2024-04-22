@@ -180,4 +180,4 @@ GROUP BY
 ORDER BY
   game.mdate,
   goal.matchid;
--- LEFT JOIN is used so that row is still displayed when both SUMS = 0
+-- LEFT JOIN is used so that row is still displayed there are no goals for the match

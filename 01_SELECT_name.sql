@@ -36,8 +36,7 @@ SELECT
 FROM
   world
 WHERE
-  name LIKE 'C%'
-  AND name LIKE '%ia';
+  name LIKE 'C%ia';
 
 -- 6. Find the country that has oo in the name
 SELECT
@@ -93,7 +92,7 @@ SELECT
 FROM
   world
 WHERE
-  capital = concat(name, ' City');
+  capital = CONCAT(name, ' City');
 
 -- 13. Find the capital and the name where the capital includes the name of the country.
 SELECT
@@ -102,7 +101,7 @@ SELECT
 FROM
   world
 WHERE
-  capital LIKE concat('%', name, '%');
+  capital LIKE CONCAT('%', name, '%');
 
 -- 14. Find the capital and the name where the capital is an extension of name of the country.
 SELECT
@@ -112,7 +111,7 @@ FROM
   world
 WHERE
   capital != name
-  AND capital LIKE concat('%', name, '%');
+  AND capital LIKE CONCAT('%', name, '%');
 
 -- 15. Show the name and the extension where the capital is an extension of name of the country.
 SELECT
@@ -122,4 +121,4 @@ FROM
   world
 WHERE
   capital != name
-  AND capital LIKE concat('%', name, '%');
+  AND capital LIKE CONCAT('%', name, '%');

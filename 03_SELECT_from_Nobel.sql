@@ -64,10 +64,10 @@ SELECT
 FROM
   nobel
 WHERE
-  subject = 'Physics'
-  AND yr = 1980
-  OR subject = 'Chemistry'
-  AND yr = 1984;
+  (subject = 'Physics'
+    AND yr = 1980)
+  OR (subject = 'Chemistry'
+    AND yr = 1984);
 
 -- 9. Show the year, subject, and name of winners for 1980 excluding Chemistry and Medicine
 SELECT
@@ -84,10 +84,10 @@ SELECT
 FROM
   nobel
 WHERE
-  subject = 'Medicine'
-  AND yr < 1910
-  OR subject = 'Literature'
-  AND yr >= 2004;
+  (subject = 'Medicine'
+    AND yr < 1910)
+  OR (subject = 'Literature' 
+    AND yr >= 2004);
 
 -- 11. Find all details of the prize won by PETER GRÜNBERG
 SELECT

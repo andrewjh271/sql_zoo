@@ -116,7 +116,7 @@ ORDER BY
   movie.title;
 
 -- 15. List all the people who have worked with 'Art Garfunkel'.
-SELECT actor.name
+SELECT DISTINCT actor.name
 FROM actor
 INNER JOIN casting ON actor.id = casting.actorid
 WHERE casting.movieid IN
@@ -125,3 +125,7 @@ WHERE casting.movieid IN
   INNER JOIN actor ON actor.id = casting.actorid
   WHERE actor.name = 'Art Garfunkel')
 AND actor.name <> 'Art Garfunkel';
+
+
+
+

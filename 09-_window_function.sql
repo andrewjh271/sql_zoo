@@ -63,6 +63,30 @@ ORDER BY
   constituency,
   votes DESC;
 
+-- alternative...
+SELECT a.constituency,
+       a.party
+FROM ge AS a
+INNER JOIN
+  (SELECT party, 
+          constituency, 
+          RANK() OVER (PARTITION BY constituency ORDER BY votes DESC) as posn
+  FROM ge
+  WHERE 
+    constituency BETWEEN 'S14000021' AND 'S14000026'
+    AND yr  = 2017
+  ) AS b
+ON a.party = b.party 
+  AND a.constituency = b.constituency
+  AND b.posn = 1
+WHERE 
+  a.constituency BETWEEN 'S14000021' AND 'S14000026'
+  AND a.yr  = 2017
+ORDER BY constituency,
+         votes DESC;
+
+
+
 -- 6. Show how many seats for each party in Scotland in 2017.
 -- You can use COUNT and GROUP BY to see how each party did in Scotland. Scottish constituencies start with 'S'
 SELECT

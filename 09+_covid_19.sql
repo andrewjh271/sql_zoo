@@ -9,6 +9,7 @@ FROM covid
 WHERE
   name = 'Spain'
   AND MONTH(whn) = 3
+  AND YEAR(whn) = 2020
 ORDER BY whn;
 
 -- 2. Modify the query to show confirmed for the day before.
@@ -21,6 +22,7 @@ FROM covid
 WHERE
   name = 'Italy'
   AND MONTH(whn) = 3
+  AND YEAR(whn) = 2020
 ORDER BY whn;
 
 -- 3. Show the number of new cases for each day, for Italy, for March.
@@ -32,6 +34,7 @@ FROM covid
 WHERE
   name = 'Italy'
   AND MONTH(whn) = 3
+  AND YEAR(whn) = 2020
 ORDER BY whn;
 
 -- 4. Show the number of new cases in Italy for each week - show Monday only.
@@ -43,6 +46,7 @@ FROM covid
 WHERE
   name = 'Italy'
   AND WEEKDAY(whn) = 0
+  AND YEAR(whn) = 2020
 ORDER BY whn;
 
 -- 5. Show the number of new cases in Italy for each week - show Monday only.
@@ -74,8 +78,8 @@ ORDER BY confirmed DESC;
 -- 7. Show the infection rate ranking for each country. Only include countries with a population of at least 10 million.
 SELECT 
    world.name,
-   ROUND(100000 * covid.confirmed / world.population) AS rate,
-   RANK() OVER (ORDER BY covid.confirmed / world.population ASC) AS rank
+   ROUND(100000 * covid.confirmed / world.population, 2) AS rate,
+   RANK() OVER (ORDER BY 100000 * covid.confirmed / world.population ASC) AS rank
 FROM covid
 JOIN world ON covid.name = world.name
 WHERE
@@ -83,6 +87,8 @@ WHERE
   AND population >= 10000000
 ORDER BY population DESC;
 -- Note that the ranking is based on the value before rounding
+-- MYSQL or the MariaDB engine only calculate the rate with precision up to the ten thousandths place, so covid.confirmed / world.population
+-- makes many columns of 0.0000 sharing the rank of 1
 
 -- 8. For each country that has had at last 1000 new cases in a single day, show the date of the peak number of new cases.
 SELECT
@@ -119,8 +125,16 @@ ORDER BY
     ELSE 0
   END,
   Peak;
--- This query was quite challenging because grouping by name only resulted in the first applicable row being selected, which meant the date was wrong. But grouping by name and date gave all rows. The fact that the MAX aggregate needed to look at a column that could only be created with the LAG window function or with the current/previous inner SELECT method presented more difficulties. Window and aggregate functions weren't available where I needed them. Using the RANK function offered a little more flexibility because I could PARTITION BY name while still including the DATE in the grouping.
--- I finally got the right data, but the 6 countries with their Peak days on April 10th were in a totally nonsensical order in the 'Correct' version that had no relation to any of the columns (including ones that weren't displayed). Otherwise, the countries that shared the same date for their Peak day were ordered by that Peak number, ascending. I wrote an absurd CASE statement to conform to the order in the 'Correct' version, but below is the original query.
+-- This query was quite challenging because grouping by name only resulted in the first applicable row being selected, which meant the date 
+-- was wrong. But grouping by name and date gave all rows. The fact that the MAX aggregate needed to look at a column that could only be created
+-- with the LAG window function or with the current/previous inner SELECT method presented more difficulties. Window and aggregate functions weren't 
+-- available where I needed them. Using the RANK function offered a little more flexibility because I could PARTITION BY name while still including 
+-- the DATE in the grouping.
+
+-- I finally got the right data, but the 6 countries with their Peak days on April 10th were in a totally nonsensical order in the 'Correct' version 
+-- that had no relation to any of the columns (including ones that weren't displayed). Otherwise, the countries that shared the same date for their 
+-- Peak day were ordered by that Peak number, ascending. I wrote an absurd CASE statement to conform to the order in the 'Correct' version, but below
+-- is the original query.
 SELECT
   Name,
   Date,
@@ -146,3 +160,55 @@ WHERE
 ORDER BY 
   Date,
   Peak;
+
+-- A similar solution, about 3.5 years later. The database usually loses connection as it executes this long and (inefficient?) query.
+-- The data has been updated since I solved this in 2020, and a 'correct' version is no longer offered for comparison. I think this
+-- produces the right answer though.
+
+
+SELECT a.name AS Name,
+       DATE_FORMAT(a.whn, '%Y-%m-%d') AS Date,
+       b.new AS Peak
+FROM covid AS a
+INNER JOIN
+  (SELECT
+    current.name,
+    current.whn,
+    current.confirmed - previous.confirmed AS new,
+    RANK() OVER (PARTITION BY current.name ORDER BY new DESC) rank
+  FROM covid AS current
+  LEFT JOIN covid AS previous
+    ON DATE_ADD(previous.whn, INTERVAL 1 DAY) = current.whn
+    AND current.name = previous.name
+    AND current.confirmed - previous.confirmed >= 1000
+  WHERE
+    current.name = previous.name
+  ORDER BY rank
+  ) AS b
+ON a.name = b.name
+  AND b.rank = 1
+ORDER BY
+  Date,
+  Peak;
+
+
+
+-- Playing with my answer from 3.5 years ago, I thought I don't need to use GROUP BY
+-- Still seems to work.
+
+SELECT Name, Date, New AS Peak
+FROM
+  (SELECT
+    current.name AS Name,
+    DATE_FORMAT(current.whn, '%Y-%m-%d') AS Date,
+    current.confirmed - previous.confirmed AS New,
+    RANK() OVER (PARTITION BY name ORDER BY New DESC) AS Rank
+  FROM covid AS current
+  LEFT JOIN covid AS previous
+    ON DATE_ADD(previous.whn, INTERVAL 1 DAY) = current.whn
+    AND current.name = previous.name
+  WHERE
+    current.confirmed - previous.confirmed > 1000
+  )
+WHERE Rank = 1
+ORDER BY Date, Peak;
