@@ -101,3 +101,33 @@ WHERE
               WHERE x.constituency = y.constituency
               AND yr = 2017)
 GROUP BY party;
+
+
+-- A more confusing alternative...
+SELECT a.party, COUNT(*)
+FROM ge AS a
+LEFT JOIN ge AS b
+  ON a.constituency =  b.constituency
+  AND a.yr = b.yr
+  AND a.votes < b.votes
+WHERE
+  a.constituency LIKE 'S%'
+  AND a.yr = 2017
+  AND b.party IS NULL
+GROUP BY a.party;
+
+-- Left joins with self, matching constituency and year, and comparing party votes.
+-- Only rows where a.votes < b.votes are selected, however because it's a LEFT JOIN,
+-- the row where a.party = SNP = MAX(votes) is still selected once, even though there
+-- are no cases where a.votes < b.votes. In this row, there are NULL values in the
+-- b columns. The WHERE clause can select for that row.
+
+-- constituency | year | a.party | a.votes | b.party | b.votes
+--       1      | 2017 | DEM     | 1698    | CONSERV | 4032   
+--       1      | 2017 | DEM     | 1698    | GREEN   | 2698   
+--       1      | 2017 | DEM     | 1698    | LABOUR  | 3821   
+--       1      | 2017 | DEM     | 1698    | INDPNDT | 2322
+--       1      | 2017 | LABOUR  | 3821    | CONSERV | 4032
+--       1      | 2017 | SNP     | 13821   |         |
+--       1      | 2017 | GREEN   | 2698    | LABOUR  | 3821
+--       1      | 2017 | GREEN   | 2698    | CONSERV | 4032
